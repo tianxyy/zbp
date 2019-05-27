@@ -21,7 +21,8 @@ namespace WindowsFormsApp1
         static void Main()
         {
             App app = new App();
-            while (!app.isDone) {
+            while (!app.isDone)
+            {
                 Application.DoEvents();
                 Thread.Sleep(50000);
             }
