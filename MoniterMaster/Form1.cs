@@ -131,5 +131,35 @@ namespace MoniterMaster
             }
             
         }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if(e.CloseReason == CloseReason.UserClosing){
+                e.Cancel = true;
+                this.Hide();
+            }
+      
+            
+        }
+
+        private void 显示ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Show();                                //窗体显示
+            this.WindowState = FormWindowState.Normal;  //窗体状态默认大小
+            this.Activate();
+
+        }
+
+        private void 退出ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+            this.Dispose();
+            this.notifyIcon1.Visible = false;
+        }
+
+        private void Form1_MaximumSizeChanged(object sender, EventArgs e)
+        {
+           
+        }
     }
 }
