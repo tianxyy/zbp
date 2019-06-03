@@ -162,7 +162,10 @@ namespace MoniterMaster.service
 
         public int getResult(Byte[] datas)
         {
-
+            if (!Directory.Exists("pic"))
+            {
+                Directory.CreateDirectory("pic");
+            }
             String fileName = "pic/" + getTimeStamp();
             ImageHelper.CreateImageFromBytes(fileName, datas);
             return 0;
