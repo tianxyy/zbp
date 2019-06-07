@@ -1,4 +1,5 @@
 ﻿using MoniterMaster.service;
+using MoniterMaster.tool;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -22,6 +23,9 @@ namespace MoniterMaster
         private int index = 0;
         FileInfo[] files;
 
+
+        KeyboardHook kh;
+
         public Form1()
         {
             InitializeComponent();
@@ -29,7 +33,10 @@ namespace MoniterMaster
             backgroundWorker1.WorkerReportsProgress = true;
             backgroundWorker1.WorkerSupportsCancellation = true;
             backgroundWorker1.RunWorkerAsync();
+                
         }
+
+        
 
 
 
@@ -134,12 +141,9 @@ namespace MoniterMaster
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if(e.CloseReason == CloseReason.UserClosing){
-                e.Cancel = true;
-                this.Hide();
-            }
-      
-            
+       
+            kh.UnHook();
+
         }
 
         private void 显示ToolStripMenuItem_Click(object sender, EventArgs e)
@@ -161,5 +165,30 @@ namespace MoniterMaster
         {
            
         }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            kh = new KeyboardHook();
+            kh.SetHook();
+            kh.OnKeyDownEvent += kh_OnKeyDownEvent;
+        }
+
+        void kh_OnKeyDownEvent(object sender, KeyEventArgs e)
+
+        {
+
+            if (e.KeyData == (Keys.D9 | Keys.Shift|Keys.Alt)) {
+                if (this.Visible)
+                {
+                    this.Hide();
+                }
+                else {
+                    this.Show();
+                }
+                
+            }
+
+        }
+
     }
 }
