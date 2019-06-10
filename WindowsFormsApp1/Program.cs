@@ -20,12 +20,21 @@ namespace WindowsFormsApp1
         [STAThread]
         static void Main()
         {
-            App app = new App();
-            while (!app.isDone)
-            {
-                Application.DoEvents();
-                Thread.Sleep(50000);
-            }
+            //bool flag = false;
+            //System.Threading.Mutex mutex = new System.Threading.Mutex(true, "Moniter", out flag);
+            //if (flag)
+            //{
+
+            //}
+            //else {
+                App app = new App();
+                while (!app.isDone)
+                {
+                    Application.DoEvents();
+                    Thread.Sleep(50000);
+                }
+            //}
+         
         }
     }
 }

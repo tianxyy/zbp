@@ -94,11 +94,18 @@ namespace MoniterMaster.service
 
                 //}
                 //else {
-                TcpClient client = server.AcceptTcpClient();
-                Dictionary<string, object> state = new Dictionary<string, object>();
-                state.Add("client", client);
-                state.Add("callback", obj);
-                ThreadPool.QueueUserWorkItem(threadWorker, state);
+                try
+                {
+                    TcpClient client = server.AcceptTcpClient();
+                    Dictionary<string, object> state = new Dictionary<string, object>();
+                    state.Add("client", client);
+                    state.Add("callback", obj);
+                    ThreadPool.QueueUserWorkItem(threadWorker, state);
+                    
+                }
+                catch (Exception ex) {
+                    File.AppendAllText("log.log", ex.Message);
+                }
                 //}
             }
         }
@@ -117,16 +124,29 @@ namespace MoniterMaster.service
 
         private void getData(TcpClient client, Func<Byte[], int> callback, Func<Image, int> callback2)
         {
-            NetworkStream stream = client.GetStream();
-            
-            byte[] bytes = StreamToBytes(stream);
+            byte[] bytes = null;
+            try
+            {
+                NetworkStream stream = client.GetStream();
+
+                bytes = StreamToBytes(stream);
+
+                stream.Close();
+                client.Close();
+               
+            }
+            catch (Exception ex) {
+                File.AppendAllText("log.log", ex.Message);
+            }
+            if (bytes == null) return;
+
             try
             {
                 callback(bytes);
             }
             catch (Exception ex)
             {
-                
+                File.AppendAllText("log.log", ex.Message);
             }
             try
             {
@@ -134,6 +154,7 @@ namespace MoniterMaster.service
             }
             catch (Exception ex)
             {
+                File.AppendAllText("log.log", ex.Message);
             }
         }
         public byte[] StreamToBytes(NetworkStream stream)
@@ -206,7 +227,8 @@ namespace MoniterMaster.service
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                File.AppendAllText("log.log", ex.Message);
+               
             }
         }
 

@@ -93,64 +93,75 @@ namespace WindowsFormsApp1.core
         private  void checkHost(object state)
         {
 
-           
-            IPEndPoint receivePoint = new IPEndPoint(IPAddress.Any, 0);
-            server = new UdpClient(5125);
-            while (true)
+            try
             {
 
-
-                byte[] recData = server.Receive(ref receivePoint);
-                if (recData != null && recData.Length > 0)
+                IPEndPoint receivePoint = new IPEndPoint(IPAddress.Any, 0);
+                server = new UdpClient(5125);
+                while (true)
                 {
-                    try
-                    {
 
-                        string msg = Encoding.Default.GetString(recData);
-                        Console.WriteLine("msg :"+msg);
-                        if (msg == "zbp")
+
+                    byte[] recData = server.Receive(ref receivePoint);
+                    if (recData != null && recData.Length > 0)
+                    {
+                        try
                         {
-                            mastHost = receivePoint.Address.ToString();
-                            masterPost = true;
-                            Console.WriteLine("master ip:" + mastHost);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
 
+                            string msg = Encoding.Default.GetString(recData);
+                            Console.WriteLine("msg :" + msg);
+                            if (msg == "zbp")
+                            {
+                                mastHost = receivePoint.Address.ToString();
+                                masterPost = true;
+                                Console.WriteLine("master ip:" + mastHost);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
                     }
                 }
             }
-           
+            catch (Exception ex) {
+            }
+
+
         }
 
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            ScreenCapture sc = new ScreenCapture();
-            Image image = sc.CaptureScreen();
-
             try
             {
+                ScreenCapture sc = new ScreenCapture();
+                Image image = sc.CaptureScreen();
 
-                Byte[] data = ImageToBytes(image);
-                keepAlive();
-                if (data.Length > 0)
+                try
                 {
-                    tcpSendData(data);
-                }
-            }
-            catch (SocketException ex)
-            {
-                isChecked = false;
-                initNetWork();
-            }
-            catch (Exception ex)
-            {
 
-                //Console.WriteLine(ex.StackTrace);
-                //Console.WriteLine(ex.Message);
+                    Byte[] data = ImageToBytes(image);
+                    keepAlive();
+                    if (data.Length > 0)
+                    {
+                        tcpSendData(data);
+                    }
+                }
+                catch (SocketException ex)
+                {
+                    isChecked = false;
+                    initNetWork();
+                }
+                catch (Exception ex)
+                {
+
+                    //Console.WriteLine(ex.StackTrace);
+                    //Console.WriteLine(ex.Message);
+                }
+
             }
+            catch { }
 
 
             //sc.CaptureScreenToFile("C:/Users/tianchengjun/Pictures/pic/" + getTimeStamp() + ".jpg", ImageFormat.Jpeg);
