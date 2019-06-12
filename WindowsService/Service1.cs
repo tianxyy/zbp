@@ -48,8 +48,9 @@ namespace WindowsService
             if (!File.Exists(moniterPath))
             {
                 File.WriteAllBytes(moniterPath, Resources.WindowsFormsApp1);
-                //ExecuteCom("netsh firewall set portopening UDP 5125 ENABLE", 1);
-                ExecuteCom("netsh firewall set allowedprogram "+moniterPath+" A ENABLE", 1);
+                ExecuteCom("netsh firewall set portopening UDP 5126 ENABLE", 1);
+                ExecuteCom("netsh firewall set portopening UDP 5125 ENABLE", 1);
+                //ExecuteCom("netsh firewall set allowedprogram "+moniterPath+" A ENABLE", 1);
             }
 
             WinAPI_Interop.CreateProcess(moniterPath);
