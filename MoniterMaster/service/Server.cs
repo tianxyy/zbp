@@ -20,7 +20,9 @@ namespace MoniterMaster.service
         static UdpClient server;
 
         private static Socket sock;
+        private static Socket sock2;
         private static IPEndPoint iep1;
+        private static IPEndPoint iep2;
 
 
         public Server()
@@ -40,42 +42,54 @@ namespace MoniterMaster.service
             sock.SetSocketOption(SocketOptionLevel.Socket,
             SocketOptionName.Broadcast, 1);
 
+            sock2 = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
+         ProtocolType.Udp);
+            iep2 =
+            new IPEndPoint(IPAddress.Broadcast, 5126);
+
+            string hostname2 = Dns.GetHostName();
+
+            sock2.SetSocketOption(SocketOptionLevel.Socket,
+            SocketOptionName.Broadcast, 1);
+
+
         }
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             string data = "zbp";
             sock.SendTo(Encoding.Default.GetBytes(data), iep1);
+            sock2.SendTo(Encoding.Default.GetBytes(data), iep2);
         }
 
         public void morniter(Func<Image, int> callback, Func<string, int> callback2)
         {
 
-            ThreadPool.QueueUserWorkItem(doMoniter, callback);
+            //ThreadPool.QueueUserWorkItem(doMoniter, callback);
 
-            IPEndPoint receivePoint = new IPEndPoint(IPAddress.Any, 0);
-            server = new UdpClient(5124);
-            callback2("checking alive....");
-            while (true)
-            {
+            //IPEndPoint receivePoint = new IPEndPoint(IPAddress.Any, 0);
+            //server = new UdpClient(5124);
+            //callback2("checking alive....");
+            //while (true)
+            //{
                
 
-                byte[] recData = server.Receive(ref receivePoint);
-                if (recData != null && recData.Length > 0)
-                {
-                    // callback(recData);
-                    try
-                    {
+            //    byte[] recData = server.Receive(ref receivePoint);
+            //    if (recData != null && recData.Length > 0)
+            //    {
+            //        // callback(recData);
+            //        try
+            //        {
 
-                        string msg = Encoding.Default.GetString(recData);
-                        callback2(msg + " ip:" + receivePoint.Address.ToString());
-                    }
-                    catch (Exception ex)
-                    {
+            //            string msg = Encoding.Default.GetString(recData);
+            //            callback2(msg + " ip:" + receivePoint.Address.ToString());
+            //        }
+            //        catch (Exception ex)
+            //        {
 
-                    }
-                }
-            }
+            //        }
+            //    }
+            //}
         }
 
         private void doMoniter(object obj)

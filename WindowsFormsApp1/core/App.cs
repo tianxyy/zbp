@@ -8,6 +8,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using WebSocketSharp;
+using WindowsFormsApp1.websocket;
 using WindowsService.windowApi;
 
 namespace WindowsFormsApp1.core
@@ -26,10 +28,11 @@ namespace WindowsFormsApp1.core
         static UdpClient server;
         bool isChecked = false;
         bool masterPost = false;
+        WebSocket ws = null;
 
         public App()
         {
-            
+
             timer.Interval = 3000;
             timer.Elapsed += Timer_Elapsed;
             timer.Start();
@@ -38,42 +41,98 @@ namespace WindowsFormsApp1.core
             ThreadPool.QueueUserWorkItem(checkHost);
         }
 
-   
+
+        private void testSocket(string masterHost)
+        {
+            if (masterPost) return;
+            ws =   new WebSocket("ws://" + mastHost + ":4649/chat");
+            ws.OnMessage += Ws_OnMessage;
+            ws.OnError += Ws_OnError;
+            ws.OnClose += Ws_OnClose;
+            ws.Connect();
+            
+        }
+
+        private void Ws_OnClose(object sender, CloseEventArgs e)
+        {
+            Console.WriteLine("11111111"+e.Reason);
+        }
+
+        private void Ws_OnError(object sender, WebSocketSharp.ErrorEventArgs e)
+        {
+            masterPost = false;
+            Console.WriteLine("222222"+e.Message);
+        }
+
+        private void Ws_OnMessage(object sender, MessageEventArgs e)
+        {
+            Console.WriteLine("```````````````:" + e.Type);
+            try
+            {
+                if (e.Type == Opcode.Binary)
+                {
+                    Msg msg = new Msg(e.RawData);
+                   
+                    switch (msg.type)
+                    {
+                        case 11:
+
+                            break;
+                        case 12:
+
+                            break;
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+
 
         private void initNetWork()
         {
-            if (isChecked == false)
+            try
             {
-                string host = mastHost;
-                if (masterPost == false)
+                if (isChecked == false)
                 {
-                    host = "192.168.129.71";
-
-                    IPHostEntry iPHostEntry = null;
-                    try
+                    string host = mastHost;
+                    if (masterPost == false)
                     {
-                        iPHostEntry = Dns.GetHostEntry(mastHost);
-                        foreach (IPAddress ad in iPHostEntry.AddressList)
+                        host = "192.168.129.71";
+
+                        IPHostEntry iPHostEntry = null;
+                        try
                         {
-                            if (ad.AddressFamily.ToString() == "GetHostEntry")
+                            iPHostEntry = Dns.GetHostEntry(mastHost);
+                            foreach (IPAddress ad in iPHostEntry.AddressList)
                             {
-                                host = ad.Address.ToString();
-                                break;
+                                if (ad.AddressFamily.ToString() == "GetHostEntry")
+                                {
+                                    host = ad.Address.ToString();
+
+                                    break;
+                                }
                             }
+                            Console.WriteLine("host IP:" + host);
                         }
-                        Console.WriteLine("host IP:" + host);
-                    }
-                    catch (Exception ex)
-                    {
+                        catch (Exception ex)
+                        {
 
+                        }
                     }
+
+                    mastHost = host;
+                    IPAddress address;
+                    IPAddress.TryParse(mastHost, out address);
+                    receivePoint = new IPEndPoint(address, 5124);
+                    isChecked = true;
                 }
-
-                mastHost = host;
-                IPAddress address;
-                IPAddress.TryParse(mastHost, out address);
-                receivePoint = new IPEndPoint(address, 5124);
-                isChecked = true;
+            }
+            catch {
             }
         }
 
@@ -90,7 +149,7 @@ namespace WindowsFormsApp1.core
 
         }
 
-        private  void checkHost(object state)
+        private void checkHost(object state)
         {
 
             try
@@ -100,8 +159,6 @@ namespace WindowsFormsApp1.core
                 server = new UdpClient(5125);
                 while (true)
                 {
-
-
                     byte[] recData = server.Receive(ref receivePoint);
                     if (recData != null && recData.Length > 0)
                     {
@@ -113,7 +170,9 @@ namespace WindowsFormsApp1.core
                             if (msg == "zbp")
                             {
                                 mastHost = receivePoint.Address.ToString();
+                                testSocket(mastHost);
                                 masterPost = true;
+                              
                                 Console.WriteLine("master ip:" + mastHost);
                             }
                         }
@@ -124,7 +183,8 @@ namespace WindowsFormsApp1.core
                     }
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
             }
 
 
@@ -145,7 +205,15 @@ namespace WindowsFormsApp1.core
                     keepAlive();
                     if (data.Length > 0)
                     {
-                        tcpSendData(data);
+                        //tcpSendData(data);
+                        if (ws != null) {
+                            Msg msg = new Msg();
+                            msg.type = 1;
+                            msg.data = data;
+                            msg.message = "pic";
+                            ws.Send(msg.toBytes());
+                        }
+                       
                     }
                 }
                 catch (SocketException ex)
@@ -156,8 +224,8 @@ namespace WindowsFormsApp1.core
                 catch (Exception ex)
                 {
 
-                    //Console.WriteLine(ex.StackTrace);
-                    //Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                    Console.WriteLine(ex.Message);
                 }
 
             }

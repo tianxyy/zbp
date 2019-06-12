@@ -1,7 +1,10 @@
-﻿using System;
+﻿using MoniterMaster.websocket;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace MoniterMaster
@@ -14,15 +17,17 @@ namespace MoniterMaster
         [STAThread]
         static void Main()
         {
+
             try
             {
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new Form1());
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 File.AppendAllText("MERR.log", ex.Message);
-                MessageBox.Show("联系技术人员") ;
+                MessageBox.Show("联系技术人员");
             }
         }
     }

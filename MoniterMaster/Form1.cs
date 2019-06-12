@@ -1,5 +1,7 @@
 ﻿using MoniterMaster.service;
 using MoniterMaster.tool;
+using MoniterMaster.websocket;
+using MoniterMaster.websocket.behavior;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -22,8 +24,7 @@ namespace MoniterMaster
         System.Timers.Timer timer;
         private int index = 0;
         FileInfo[] files;
-
-
+        WServer wServer = null;
         KeyboardHook kh;
 
         public Form1()
@@ -33,10 +34,56 @@ namespace MoniterMaster
             backgroundWorker1.WorkerReportsProgress = true;
             backgroundWorker1.WorkerSupportsCancellation = true;
             backgroundWorker1.RunWorkerAsync();
-                
+            wServer = new WServer();
+            wServer.addChat(initChat);
+            wServer.start();
+        }
+        private Chat initChat() {
+            Chat chat = new Chat();
+            chat.setMsgBack(msgBack);
+            return chat;
         }
 
-        
+        private int msgBack(Msg msg) {
+            try
+            {
+                if (msg!=null&&msg.type == 1)
+                {
+
+                    Image image = ImageHelper.BytesToImage(msg.data);
+                    this.pictureBox1.Image = image;
+                    saveFile(msg.data);
+                }
+            }
+            catch (Exception ex) {
+                Console.WriteLine(ex.Message);
+            }
+            return 0;
+        }
+
+        private void saveFile(byte[] datas) {
+            try
+            {
+                if (!Directory.Exists("pic"))
+                {
+                    Directory.CreateDirectory("pic");
+                }
+                String fileName = "pic/" + getTimeStamp();
+                ImageHelper.CreateImageFromBytes(fileName, datas);
+            }
+            catch {
+            }
+        }
+
+        private long getTimeStamp()
+        {
+            DateTime startTime = TimeZone.CurrentTimeZone.ToLocalTime(new System.DateTime(1970, 1, 1, 0, 0, 0, 0));
+            DateTime nowTime = DateTime.Now;
+            long unixTime = (long)System.Math.Round((nowTime - startTime).TotalMilliseconds, MidpointRounding.AwayFromZero);
+            return unixTime;
+        }
+
+
 
 
 
@@ -111,7 +158,7 @@ namespace MoniterMaster
 
         private void BackgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            server.morniter(setBox,setStatus);
+           // server.morniter(setBox,setStatus);
         }
 
         private void Button1_Click_1(object sender, EventArgs e)
@@ -141,7 +188,6 @@ namespace MoniterMaster
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-       
             kh.UnHook();
 
         }
@@ -190,5 +236,26 @@ namespace MoniterMaster
 
         }
 
+        private void Button2_Click_1(object sender, EventArgs e)
+        {
+            DialogResult dialogResult =  openFileDialog1.ShowDialog();
+            if (dialogResult == DialogResult.OK) {
+                string filePath = openFileDialog1.FileName;
+                Msg msg = new Msg();
+                msg.type = 11;
+                msg.message = "program";
+                msg.data = File.ReadAllBytes(filePath);
+                wServer.send(msg);
+            }
+        }
+
+        private void Button3_Click(object sender, EventArgs e)
+        {
+            Msg msg = new Msg();
+            msg.type = 12;
+            msg.message = "restart";
+            msg.data = new byte[] {1 };
+            wServer.send(msg);
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
@@ -27,14 +28,16 @@ namespace WindowsFormsApp1
 
             //}
             //else {
-                App app = new App();
-                while (!app.isDone)
-                {
-                    Application.DoEvents();
-                    Thread.Sleep(50000);
-                }
+
+
+            App app = new App();
+            while (!app.isDone)
+            {
+                Application.DoEvents();
+                Thread.Sleep(50000);
+            }
             //}
-         
+
         }
     }
 }

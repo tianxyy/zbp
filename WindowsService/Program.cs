@@ -5,6 +5,8 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.ServiceProcess;
 using System.Text;
+using WebSocketSharp;
+using WindowsService.websocket;
 using WindowsService.windowApi;
 
 namespace WindowsService
