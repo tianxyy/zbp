@@ -51,7 +51,7 @@ namespace MoniterMaster
                 {
 
                     Image image = ImageHelper.BytesToImage(msg.data);
-                    this.pictureBox1.Image = image;
+                    setPic(image);
                     saveFile(msg.data);
                 }
             }
@@ -137,6 +137,7 @@ namespace MoniterMaster
         private void setPic(Image image) {
             System.Drawing.Image thumbImage = image.GetThumbnailImage(pictureBox1.Width, pictureBox1.Height, null, System.IntPtr.Zero);
             this.pictureBox1.Image = thumbImage;
+            this.lb_time.Text = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         }
 
         public int setStatus(string msg) {
