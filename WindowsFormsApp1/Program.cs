@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using WindowsFormsApp1.core;
-using WindowsService.windowApi;
+
 
 namespace WindowsFormsApp1
 {
@@ -21,23 +17,16 @@ namespace WindowsFormsApp1
         [STAThread]
         static void Main()
         {
-            //bool flag = false;
-            //System.Threading.Mutex mutex = new System.Threading.Mutex(true, "Moniter", out flag);
-            //if (flag)
+            Application.Run(new Form1());
+
+            //App app = new App();
+            //while (!app.isDone)
             //{
-
+            //    Application.DoEvents();
+            //    Thread.Sleep(50000);
             //}
-            //else {
-
-
-            App app = new App();
-            while (!app.isDone)
-            {
-                Application.DoEvents();
-                Thread.Sleep(50000);
-            }
-            //}
-
+           
         }
+
     }
 }

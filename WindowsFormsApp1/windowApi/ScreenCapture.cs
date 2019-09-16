@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows.Forms;
 
 namespace WindowsService.windowApi
 {
@@ -18,6 +19,30 @@ namespace WindowsService.windowApi
         {
             return CaptureWindow(User32.GetDesktopWindow());
         }
+
+        public static Bitmap GetScreenSnapshot()
+        {
+            try
+            {
+                Rectangle rc = SystemInformation.VirtualScreen;
+                var bitmap = new Bitmap(rc.Width, rc.Height, PixelFormat.Format32bppArgb);
+
+                using (Graphics memoryGrahics = Graphics.FromImage(bitmap))
+                {
+                    memoryGrahics.CopyFromScreen(rc.X, rc.Y, 0, 0, rc.Size, CopyPixelOperation.SourceCopy);
+                }
+
+                return bitmap;
+            }
+            // ReSharper disable EmptyGeneralCatchClause
+            catch (Exception)
+            // ReSharper restore EmptyGeneralCatchClause
+            {
+
+            }
+
+            return null;
+        }
         /// <summary>
         /// Creates an Image object containing a screen shot of a specific window
         /// </summary>
@@ -25,6 +50,7 @@ namespace WindowsService.windowApi
         /// <returns></returns>
         public Image CaptureWindow(IntPtr handle)
         {
+            
             // get te hDC of the target window
             IntPtr hdcSrc = User32.GetWindowDC(handle);
             // get the size
