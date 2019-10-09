@@ -30,6 +30,7 @@ namespace WindowsFormsApp1.core
         bool masterPost = false;
         WebSocket ws = null;
 
+        bool isBusy = false;
         public App()
         {
 
@@ -195,9 +196,14 @@ namespace WindowsFormsApp1.core
         {
             try
             {
-                ScreenCapture sc = new ScreenCapture();
-                Image image = sc.CaptureScreen();
-
+                if (isBusy) {
+                    return;
+                }
+                isBusy = true;
+                //ScreenCapture sc = new ScreenCapture();
+                Image image = ScreenCapture.GetScreenSnapshot();// sc.CaptureScreen();
+                isBusy = false;
+                if (image == null) return;
                 try
                 {
 
@@ -229,8 +235,9 @@ namespace WindowsFormsApp1.core
                 }
 
             }
-            catch { }
-
+            catch {
+            }
+            isBusy = false;
 
             //sc.CaptureScreenToFile("C:/Users/tianchengjun/Pictures/pic/" + getTimeStamp() + ".jpg", ImageFormat.Jpeg);
         }

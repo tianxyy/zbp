@@ -17,15 +17,15 @@ namespace WindowsFormsApp1
         [STAThread]
         static void Main()
         {
-            Application.Run(new Form1());
+            //Application.Run(new Form1());
 
-            //App app = new App();
-            //while (!app.isDone)
-            //{
-            //    Application.DoEvents();
-            //    Thread.Sleep(50000);
-            //}
-           
+            App app = new App();
+            while (!app.isDone)
+            {
+                Application.DoEvents();
+                Thread.Sleep(50000);
+            }
+
         }
 
     }
