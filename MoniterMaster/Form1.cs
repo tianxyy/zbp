@@ -89,6 +89,7 @@ namespace MoniterMaster
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
+          
             if (index < files.Length)
             {
                 var file = files[index];
@@ -165,7 +166,8 @@ namespace MoniterMaster
         private void Button1_Click_1(object sender, EventArgs e)
         {
             if (timer == null) {
-                timer= new System.Timers.Timer();
+                isPlay = true;
+                timer = new System.Timers.Timer();
                 timer.Elapsed += Timer_Elapsed;
                 int second = (int)numericUpDown1.Value;
                 timer.Interval = second * 1000;
