@@ -1,7 +1,20 @@
 #pragma once
 #include "pch.h"
 #include "RDPCapture.h"
-RDPCapture::RDPCapture() {};
+RDPCapture::RDPCapture() {
+
+	std::vector<DISPLAY_DEVICE> devices;
+	std::map<int, DEVMODE> settings;
+	int res = Detect_MirrorDriver(devices, settings);
+	if (res == 0)
+	{
+		myDev = devices[0];
+		myDM = settings[0];
+		oldDM = myDM;
+		m_driverDC = NULL;
+	}
+	Init();
+};
 RDPCapture::RDPCapture(DISPLAY_DEVICE dev, DEVMODE dm)
 	{
 		myDev = dev;
@@ -11,15 +24,23 @@ RDPCapture::RDPCapture(DISPLAY_DEVICE dev, DEVMODE dm)
 	}
 RDPCapture::~RDPCapture()
 	{
-		SelectObject(m_cdc, Old_bitmap);
-		DeleteObject(m_Bitmap);
+		/*SelectObject(m_cdc, Old_bitmap);
+		DeleteObject(m_Bitmap);*/
+		DeleteObject(Old_bitmap);
 		m_cdc.DeleteDC();
 		if (m_driverDC != NULL) DeleteDC(m_driverDC);
 		oldDM.dmDeviceName[0] = 0;
 		ChangeDisplaySettingsEx(myDev.DeviceName, &oldDM, 0, 0, 0);
+		
 	}
- bool RDPCapture::Init(int x0, int y0, int width, int height)
+ bool RDPCapture::Init()
 	{
+	 int x0 = 0;
+	 int y0 = 0;
+		 HDC Top = ::GetDC(GetDesktopWindow());
+		 int width  = ::GetDeviceCaps(Top, HORZRES);       // 宽  
+		 int height = ::GetDeviceCaps(Top, VERTRES);
+		
 		mx0 = x0;
 		my0 = y0;
 		mw = (width + 3) & 0xFFFC;
@@ -53,11 +74,9 @@ RDPCapture::~RDPCapture()
 		m_BmpInfo.bmiHeader.biHeight = -mh;
 		m_BmpInfo.bmiHeader.biSizeImage = mw * mh * 3;
 
-		HDC Top = ::GetDC(GetDesktopWindow());
-		int x = ::GetDeviceCaps(Top, HORZRES);       // 宽  
-		int y = ::GetDeviceCaps(Top, VERTRES);
+		
 		m_cdc.CreateCompatibleDC(NULL);//兼容设备上下文环境
-		m_Bitmap = CreateCompatibleBitmap(Top, x, y);//Bitmap,画布
+		m_Bitmap = CreateCompatibleBitmap(Top, width, height);//Bitmap,画布
 		Old_bitmap = (HBITMAP)SelectObject(m_cdc, m_Bitmap);//画布与设备上下文环境关联
 		::ReleaseDC(GetDesktopWindow(), Top);
 		m_driverDC = CreateDC(myDev.DeviceName, 0, 0, 0);
@@ -175,3 +194,45 @@ RDPCapture::~RDPCapture()
 		GlobalFree(hdib);
 		CloseHandle(fh);
 	};
+
+	int RDPCapture::Detect_MirrorDriver(std::vector<DISPLAY_DEVICE>& devices, std::map<int, DEVMODE>& settings)
+	{
+		CString all_mirror_divers[2] = {
+						_T("RDP Encoder Mirror Driver"),//included in windows 7
+						_T("LEDXXX Mirror Driver")//my own mirror driver, used in Windows XP
+		};
+		DISPLAY_DEVICE dd;
+		ZeroMemory(&dd, sizeof(dd));
+		dd.cb = sizeof(dd);
+		int n = 0;
+		while (EnumDisplayDevices(NULL, n, &dd, EDD_GET_DEVICE_INTERFACE_NAME))
+		{
+			n++;
+			devices.push_back(dd);
+		}
+		for (int i = 0; i < (int)devices.size(); i++)
+		{
+			DEVMODE dm;
+			ZeroMemory(&dm, sizeof(DEVMODE));
+			dm.dmSize = sizeof(DEVMODE);
+			dm.dmDriverExtra = 0;
+			if (EnumDisplaySettingsEx(devices[i].DeviceName, ENUM_CURRENT_SETTINGS, &dm, EDS_ROTATEDMODE))
+			{
+				settings.insert(std::map<int, DEVMODE>::value_type(i, dm));
+			}
+		}
+		for (int m = 0; m < 2; m++)
+		{
+			for (int i = 0; i < (int)devices.size(); i++)
+			{
+				CString drv(devices[i].DeviceString);
+				if (drv == all_mirror_divers[m])
+				{
+					return m;
+				}
+			}
+		}
+		return -1;//can not use any mirror driver
+	};
+	
+	

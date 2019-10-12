@@ -33,6 +33,7 @@ namespace WindowsService.windowApi
                     try
                     {
                         return Image.FromHbitmap(handle);
+                        //Marshal.FreeHGlobal(handle);                      
                     }
                     catch (Exception ex)
                     {
