@@ -4,10 +4,8 @@
 
 
 extern "C" HBITMAP __declspec(dllexport) Capture() {
-
-
 	unsigned char* data = NULL;
-	Singleton<RDPCapture>::instance().GetData(data);
-	return Singleton<RDPCapture>::instance().m_Bitmap;
-	
+	RDPCapture& rdp_capture = Singleton<RDPCapture>::instance();
+	rdp_capture.GetData(data);
+	return rdp_capture.m_Bitmap;	
 }
